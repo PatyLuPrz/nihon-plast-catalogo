@@ -4,3 +4,17 @@
 
 # Archivos de entorno
 .env
+
+# Archivos de build
+/frontend/dist
+/backend/dist
+
+# Archivos de logs
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de Vite
+/frontend/.vite
