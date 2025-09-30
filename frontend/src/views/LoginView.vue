@@ -1,48 +1,49 @@
 <template>
-  <div class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: #f8f9fa;">
-    <div class="card p-4 shadow-lg" style="width: 100%; max-width: 400px;">
-      <h2 class="card-title text-center mb-4">
-        Iniciar Sesión
-      </h2>
-
-      <div v-if="authStore.error" class="alert alert-danger" role="alert">
-        {{ authStore.error }}
+  <!-- Navbar global ahora en App.vue -->
+  <div class="container py-4 minimal-bg d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="col-12 col-md-6 col-lg-4 mx-auto">
+      <div class="card border-0 shadow-sm minimal-card">
+        <div class="card-body">
+          <h4 class="card-title mb-3 fw-semibold text-center">Iniciar Sesión</h4>
+          <div v-if="authStore.error" class="alert alert-danger" role="alert">
+            {{ authStore.error }}
+          </div>
+          <form @submit.prevent="handleLogin" class="row g-3">
+            <div class="col-12">
+              <label for="email" class="form-label">Email</label>
+              <input 
+                id="email" 
+                name="email" 
+                type="email" 
+                required 
+                v-model="email"
+                class="form-control form-control-lg minimal-input"
+              >
+            </div>
+            <div class="col-12">
+              <label for="password" class="form-label">Contraseña</label>
+              <input 
+                id="password" 
+                name="password" 
+                type="password" 
+                required 
+                v-model="password"
+                class="form-control form-control-lg minimal-input"
+              >
+            </div>
+            <div class="col-12 d-grid mt-2">
+              <button 
+                type="submit" 
+                :disabled="authStore.loading"
+                class="btn btn-dark btn-lg minimal-btn"
+              >
+                <span v-if="authStore.loading">Cargando...</span>
+                <span v-else>Iniciar Sesión</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      <form @submit.prevent="handleLogin">
-        <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <input 
-            id="email" 
-            name="email" 
-            type="email" 
-            required 
-            v-model="email"
-            class="form-control"
-          >
-        </div>
-
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <input 
-            id="password" 
-            name="password" 
-            type="password" 
-            required 
-            v-model="password"
-            class="form-control"
-          >
-        </div>
-
-        <button 
-          type="submit" 
-          :disabled="authStore.loading"
-          class="btn btn-primary w-100 mt-3"
-        >
-          <span v-if="authStore.loading">Cargando...</span>
-          <span v-else>Iniciar Sesión</span>
-        </button>
-      </form>
     </div>
   </div>
 </template>

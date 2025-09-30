@@ -1,86 +1,59 @@
 <template>
-  <div class="container-fluid py-4">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 rounded shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Inventario App</a>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <router-link :to="{ name: 'Articulos' }" class="nav-link active">Artículos</router-link>
-                    </li>
-                    <li class="nav-item">
-                        <router-link :to="{ name: 'Movimientos' }" class="nav-link">Movimientos</router-link>
-                    </li>
-                    <li class="nav-item">
-                        <button @click="handleLogout" class="btn btn-danger btn-sm ms-3">
-                            Salir ({{ authStore.user.NombreUsuario }})
-                        </button>
-                    </li>
-                </ul>
+    <div class="container py-4 minimal-bg">
+        <!-- Navbar global ahora en App.vue -->
+
+        <div class="row g-4">
+            <div class="col-12 mx-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="fw-semibold">Lista de Inventario <span class="text-muted">(Stock: {{ totalStock }})</span></h3>
+                    <router-link :to="{ name: 'ArticuloNuevo' }" class="btn btn-success minimal-btn">
+                        + Nuevo Artículo
+                    </router-link>
+                </div>
+                <div v-if="loading" class="alert alert-info">Cargando artículos...</div>
+                <div v-else-if="error" class="alert alert-danger">Error al cargar: {{ error }}</div>
+                <div class="table-responsive minimal-table-wrapper">
+                    <table class="table table-borderless align-middle minimal-table">
+                        <thead>
+                            <tr class="bg-light">
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Stock Actual</th>
+                                <th>Mínimo</th>
+                                <th>Máximo</th>
+                                <th>Unidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="articulo in articulos" :key="articulo.IdArticulo" :class="{'table-warning': articulo.StockActual <= articulo.CantidadMinima}">
+                                <td class="text-muted">{{ articulo.IdArticulo }}</td>
+                                <td class="fw-semibold">
+                                    {{ articulo.NomArticulo }}
+                                    <span v-if="articulo.StockActual <= articulo.CantidadMinima" class="badge bg-danger ms-2">Bajo Stock</span>
+                                </td>
+                                <td><strong>{{ articulo.StockActual }}</strong></td>
+                                <td>{{ articulo.CantidadMinima }}</td>
+                                <td>{{ articulo.CantidadMaxima }}</td>
+                                <td>{{ articulo.NombreUnidad }}</td>
+                                <td>
+                                    <router-link :to="{ name: 'ArticuloEditar', params: { id: articulo.IdArticulo } }" class="btn btn-sm btn-info me-2 minimal-btn">Editar</router-link>
+                                    <button @click="confirmDelete(articulo)" class="btn btn-sm btn-danger minimal-btn">Eliminar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-end">Total de Unidades en Stock:</td>
+                                <td colspan="5"><strong>{{ totalStock }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
-    </nav>
-    
-    <h1 class="mb-4">Catálogo de Artículos</h1>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Lista de Inventario (Stock: {{ totalStock }})</h3>
-        <router-link :to="{ name: 'ArticuloNuevo' }" class="btn btn-success">
-            + Nuevo Artículo
-        </router-link>
     </div>
 
-    <div v-if="loading" class="alert alert-info">Cargando artículos...</div>
-    <div v-else-if="error" class="alert alert-danger">Error al cargar: {{ error }}</div>
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Stock Actual</th>
-                    <th>Mínimo</th>
-                    <th>Máximo</th>
-                    <th>Unidad</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="articulo in articulos" :key="articulo.IdArticulo" 
-                    :class="{'table-warning': articulo.StockActual <= articulo.CantidadMinima}">
-                    
-                    <td>{{ articulo.IdArticulo }}</td>
-                    <td>
-                        {{ articulo.NomArticulo }}
-                        <span v-if="articulo.StockActual <= articulo.CantidadMinima" class="badge bg-danger ms-2">Bajo Stock</span>
-                    </td>
-                    <td>
-                        <strong>{{ articulo.StockActual }}</strong>
-                    </td>
-                    <td>{{ articulo.CantidadMinima }}</td>
-                    <td>{{ articulo.CantidadMaxima }}</td>
-                    <td>{{ articulo.NombreUnidad }}</td>
-                    <td>
-                        <router-link :to="{ name: 'ArticuloEditar', params: { id: articulo.IdArticulo } }" 
-                                     class="btn btn-sm btn-info me-2">
-                            Editar
-                        </router-link>
-                        <button @click="confirmDelete(articulo)" class="btn btn-sm btn-danger">
-                            Eliminar
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot class="table-light">
-                <tr>
-                    <td colspan="2" class="text-end">**Total de Unidades en Stock:**</td>
-                    <td colspan="5"><strong>{{ totalStock }}</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-  </div>
 </template>
 
 <script setup>

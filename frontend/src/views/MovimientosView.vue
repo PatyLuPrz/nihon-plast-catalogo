@@ -1,119 +1,147 @@
 <template>
-  <div class="container-fluid py-4">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 rounded shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Inventario App</a>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <router-link :to="{ name: 'Articulos' }" class="nav-link">Artículos</router-link>
-                    </li>
-                    <li class="nav-item">
-                        <router-link :to="{ name: 'Movimientos' }" class="nav-link active">Movimientos</router-link>
-                    </li>
-                    <li class="nav-item">
-                        <button @click="handleLogout" class="btn btn-danger btn-sm ms-3">
-                            Salir
-                        </button>
-                    </li>
-                </ul>
+    <div class="container py-4 minimal-bg">
+        <!-- Navbar global ahora en App.vue -->
+
+        <div class="row g-4">
+            <div class="col-12 col-lg-5 mx-auto">
+                <div class="card border-0 shadow-sm minimal-card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3 fw-semibold">Nuevo Movimiento</h4>
+                        <div v-if="movimientoMsg" class="alert alert-success mb-2">{{ movimientoMsg }}</div>
+                        <div v-if="movimientoError" class="alert alert-danger mb-2">{{ movimientoError }}</div>
+                        <form @submit.prevent="handleMovimiento" class="row g-3">
+                            <div class="col-12">
+                                <label for="articulo" class="form-label">Artículo</label>
+                                <select id="articulo" v-model.number="form.IdArticulo" class="form-select form-select-lg minimal-input" required>
+                                    <option value="" disabled>Seleccione un artículo...</option>
+                                    <option v-for="articulo in articulos" :key="articulo.IdArticulo" :value="articulo.IdArticulo">
+                                        {{ articulo.NomArticulo }} (Stock: {{ articulo.StockActual }})
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="tipo" class="form-label">Tipo</label>
+                                <select id="tipo" v-model="form.TipoMovimiento" class="form-select form-select-lg minimal-input" required>
+                                    <option value="" disabled>Seleccione tipo...</option>
+                                    <option value="ENTRADA">ENTRADA (+)</option>
+                                    <option value="SALIDA">SALIDA (-)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="cantidad" class="form-label">Cantidad</label>
+                                <input type="number" id="cantidad" v-model.number="form.Cantidad" class="form-control form-control-lg minimal-input" required min="1">
+                            </div>
+                            <div class="col-12">
+                                <label for="comentarios" class="form-label">Comentarios</label>
+                                <textarea id="comentarios" v-model="form.Comentarios" class="form-control minimal-input" rows="2"></textarea>
+                            </div>
+                            <div class="col-12 d-grid mt-2">
+                                <button type="submit" class="btn btn-dark btn-lg minimal-btn" :disabled="isSaving">
+                                    <span v-if="isSaving">Registrando...</span>
+                                    <span v-else>Registrar Movimiento</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-7 mx-auto">
+                <h3 class="mb-3 fw-semibold">Historial de Movimientos</h3>
+                <div v-if="loadingHistorial" class="alert alert-info">Cargando historial...</div>
+                <div v-else-if="historialError" class="alert alert-danger">Error al cargar historial: {{ historialError }}</div>
+                <div v-else-if="historial.length === 0" class="alert alert-warning text-center">
+                    Historial vacío. ¡Registra una <b>Entrada</b> o <b>Salida</b> para empezar!
+                </div>
+                <div v-else class="table-responsive minimal-table-wrapper">
+                    <table class="table table-borderless align-middle minimal-table">
+                        <thead>
+                            <tr class="bg-light">
+                                <th>ID</th>
+                                <th>Artículo</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Stock Final</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="mov in historial" :key="mov.IdMovimiento">
+                                <td class="text-muted">{{ mov.IdMovimiento }}</td>
+                                <td class="fw-semibold">{{ mov.NomArticulo }}</td>
+                                <td>
+                                    <span class="badge px-3 py-2" :class="mov.TipoMovimiento === 'ENTRADA' ? 'bg-success' : 'bg-danger'">
+                                        {{ mov.TipoMovimiento }}
+                                    </span>
+                                </td>
+                                <td>{{ mov.Cantidad }}</td>
+                                <td>{{ mov.StockFinal }}</td>
+                                <td class="text-nowrap">{{ new Date(mov.FechaMovimiento).toLocaleDateString() }}<br><span class="text-muted small">{{ new Date(mov.FechaMovimiento).toLocaleTimeString() }}</span></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" class="text-end text-muted">Total: {{ historial.length }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
-    </nav>
-    
-    <h1 class="mb-4">Registro de Movimientos de Stock</h1>
-
-    <div class="card p-4 mb-4 shadow-sm">
-      <h4 class="card-title">Nuevo Movimiento</h4>
-      
-      <div v-if="movimientoMsg" class="alert alert-success mt-3">{{ movimientoMsg }}</div>
-      <div v-if="movimientoError" class="alert alert-danger mt-3">{{ movimientoError }}</div>
-
-      <form @submit.prevent="handleMovimiento" class="row g-3">
-        
-        <div class="col-md-6">
-          <label for="articulo" class="form-label">Artículo</label>
-          <select id="articulo" v-model.number="form.IdArticulo" class="form-select" required>
-            <option value="" disabled>Seleccione un artículo...</option>
-            <option v-for="articulo in articulos" :key="articulo.IdArticulo" :value="articulo.IdArticulo">
-                {{ articulo.NomArticulo }} (Stock: {{ articulo.StockActual }})
-            </option>
-          </select>
-        </div>
-
-        <div class="col-md-3">
-          <label for="tipo" class="form-label">Tipo</label>
-          <select id="tipo" v-model="form.TipoMovimiento" class="form-select" required>
-            <option value="" disabled>Seleccione tipo...</option>
-            <option value="ENTRADA">ENTRADA (+)</option>
-            <option value="SALIDA">SALIDA (-)</option>
-          </select>
-        </div>
-
-        <div class="col-md-3">
-          <label for="cantidad" class="form-label">Cantidad</label>
-          <input type="number" id="cantidad" v-model.number="form.Cantidad" class="form-control" required min="1">
-        </div>
-        
-        <div class="col-12">
-            <label for="comentarios" class="form-label">Comentarios</label>
-            <textarea id="comentarios" v-model="form.Comentarios" class="form-control" rows="2"></textarea>
-        </div>
-
-        <div class="col-12 mt-4">
-          <button type="submit" class="btn btn-primary" :disabled="isSaving">
-            <span v-if="isSaving">Registrando...</span>
-            <span v-else>Registrar Movimiento</span>
-          </button>
-        </div>
-      </form>
     </div>
-
-    <h3 class="mt-5 mb-3">Historial de Movimientos</h3>
-    
-    <div v-if="loadingHistorial" class="alert alert-info">Cargando historial...</div>
-    <div v-else-if="historialError" class="alert alert-danger">Error al cargar historial: {{ historialError }}</div>
-    
-    <div v-else-if="historial.length === 0" class="alert alert-warning text-center">
-        Historial vacío. ¡Registra una **Entrada** o **Salida** para empezar! 🚚
-    </div>
-    
-    <div v-else class="table-responsive">
-        <table class="table table-striped table-hover shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID Mov.</th>
-                    <th>Artículo</th>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Stock Final</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="mov in historial" :key="mov.IdMovimiento" 
-                    :class="{'table-success': mov.TipoMovimiento === 'ENTRADA', 'table-danger': mov.TipoMovimiento === 'SALIDA'}">
-                    <td>{{ mov.IdMovimiento }}</td>
-                    <td>{{ mov.NomArticulo }}</td>
-                    <td>
-                        <span class="badge" :class="{'bg-success': mov.TipoMovimiento === 'ENTRADA', 'bg-danger': mov.TipoMovimiento === 'SALIDA'}">
-                            {{ mov.TipoMovimiento }}
-                        </span>
-                    </td>
-                    <td>{{ mov.CantidadMovida }}</td>
-                    <td>{{ mov.StockFinal }}</td>
-                    <td>{{ new Date(mov.FechaMovimiento).toLocaleDateString() }} {{ new Date(mov.FechaMovimiento).toLocaleTimeString() }}</td>
-                </tr>
-            </tbody>
-            <tfoot class="table-light">
-                <tr>
-                    <td colspan="6">Total de registros: {{ historial.length }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-  </div>
 </template>
+<style scoped>
+.minimal-bg {
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+.minimal-card {
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+}
+.minimal-input {
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+    background: #f9f9f9;
+    font-size: 1.1rem;
+}
+.minimal-btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+}
+.minimal-table-wrapper {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    padding: 1rem;
+}
+.minimal-table th, .minimal-table td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+}
+.minimal-table th {
+    font-weight: 600;
+    color: #333;
+    background: #f4f4f4;
+}
+.minimal-table tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+.minimal-table .badge {
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+}
+@media (max-width: 991px) {
+    .minimal-table-wrapper {
+        padding: 0.5rem;
+    }
+    .minimal-card {
+        margin-bottom: 2rem;
+    }
+}
+</style>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
@@ -176,10 +204,15 @@ const handleMovimiento = async () => {
     movimientoError.value = null;
 
     try {
+        if (!form.IdArticulo) {
+            throw new Error("Debe seleccionar un artículo.");
+        }
+        if (!form.TipoMovimiento) {
+            throw new Error("Debe seleccionar el tipo de movimiento.");
+        }
         if (form.Cantidad <= 0) {
             throw new Error("La cantidad debe ser mayor a cero.");
         }
-        
         // CONSTRUIMOS EL PAYLOAD COMPLETO
         const payload = {
             IdArticulo: form.IdArticulo,
@@ -191,17 +224,14 @@ const handleMovimiento = async () => {
         await articuloService.registrarMovimiento(payload);
 
         movimientoMsg.value = `${form.TipoMovimiento} de ${form.Cantidad} unidades registrada con éxito.`;
-        
         // Limpiar formulario y recargar datos
         form.IdArticulo = '';
         form.Cantidad = 1; 
         form.TipoMovimiento = '';
         form.Comentarios = ''; 
-        
         loadData(); 
-
     } catch (err) {
-        movimientoError.value = err.response?.data?.msg || 'Error al registrar el movimiento.';
+        movimientoError.value = err.message || err.response?.data?.msg || 'Error al registrar el movimiento.';
         console.error("Error en movimiento:", err);
     } finally {
         isSaving.value = false;

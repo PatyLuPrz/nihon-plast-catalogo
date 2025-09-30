@@ -100,18 +100,30 @@ const deleteArticulo = async (id) => {
  * NOTA: Usa TipoMovimiento para construir la URL, y solo envía IdArticulo, Cantidad y Comentarios en el body.
  */
 const registrarMovimiento = async (data) => {
-    // 1. Separamos el tipo de movimiento del resto de la data (el body)
-    const { TipoMovimiento, ...restOfData } = data;
-    
-    // 2. Construimos la URL usando el tipo de movimiento (ej: /api/movimientos/entrada)
+    // Separamos el tipo de movimiento del resto de la data (el body)
+    const { TipoMovimiento, IdArticulo, Cantidad, Comentarios } = data;
+    // Construimos la URL usando el tipo de movimiento (ej: /api/movimientos/entrada)
     const url = `${MOVIMIENTOS_API_URL}/${TipoMovimiento.toLowerCase()}`;
-    
     try {
-        // 3. Enviamos SOLO los datos (IdArticulo, Cantidad, Comentarios)
-        const response = await axios.post(url, restOfData, getAuthHeader()); 
+        // Enviamos SOLO los datos (IdArticulo, Cantidad, Comentarios)
+        const response = await axios.post(url, { IdArticulo, Cantidad, Comentarios }, getAuthHeader());
         return response.data;
     } catch (error) {
         console.error("Error al registrar movimiento:", error);
+        throw error;
+    }
+};
+
+/**
+ * Obtiene el historial de movimientos de stock.
+ * @returns {Promise<Array>} Lista de movimientos.
+ */
+const getMovimientos = async () => {
+    try {
+        const response = await axios.get(MOVIMIENTOS_API_URL, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener movimientos:", error);
         throw error;
     }
 };

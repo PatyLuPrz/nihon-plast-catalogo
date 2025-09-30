@@ -1,61 +1,60 @@
 <template>
-    <div class="container py-4">
-        <h1 class="mb-4">{{ isEditing ? 'Editar Artículo' : 'Crear Nuevo Artículo' }}</h1>
-
-        <div v-if="successMsg" class="alert alert-success">{{ successMsg }}</div>
-        <div v-if="errorMsg" class="alert alert-danger">{{ errorMsg }}</div>
-        <div v-if="loading" class="alert alert-info">Cargando datos...</div>
-        
-        <div class="card p-4 shadow-sm" :class="{ 'opacity-50': isSaving || loading }">
-            <form @submit.prevent="handleSubmit">
-                
-                <div v-if="isEditing" class="mb-3">
-                    <label class="form-label">ID Artículo</label>
-                    <input type="text" :value="form.IdArticulo" class="form-control" disabled>
-                </div>
-
-                <div class="mb-3">
-                    <label for="codigo" class="form-label">Código del Artículo</label>
-                    <input type="text" id="codigo" v-model="form.CodArticulo" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="nombre" class="form-label">Nombre del Artículo</label>
-                    <input type="text" id="nombre" v-model="form.NomArticulo" class="form-control" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="proveedor" class="form-label">ID Proveedor</label>
-                    <input type="number" id="proveedor" v-model.number="form.IdProveedor" class="form-control" required min="1">
-                    <small class="form-text text-muted">Asegúrate de que este ID exista en tu tabla de Proveedores.</small>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="minimo" class="form-label">Stock Mínimo (Alerta)</label>
-                        <input type="number" id="minimo" v-model.number="form.CantidadMinima" class="form-control" required min="0">
+    <div class="container py-4 minimal-bg">
+        <div class="row g-4">
+            <div class="col-12 col-lg-7 mx-auto">
+                <h1 class="mb-4 fw-semibold text-center">{{ isEditing ? 'Editar Artículo' : 'Crear Nuevo Artículo' }}</h1>
+                <div v-if="successMsg" class="alert alert-success">{{ successMsg }}</div>
+                <div v-if="errorMsg" class="alert alert-danger">{{ errorMsg }}</div>
+                <div v-if="loading" class="alert alert-info">Cargando datos...</div>
+                <div class="card border-0 shadow-sm minimal-card" :class="{ 'opacity-50': isSaving || loading }">
+                    <div class="card-body">
+                        <form @submit.prevent="handleSubmit" class="row g-3">
+                            <div v-if="isEditing" class="col-12">
+                                <label class="form-label">ID Artículo</label>
+                                <input type="text" :value="form.IdArticulo" class="form-control minimal-input" disabled>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="codigo" class="form-label">Código del Artículo</label>
+                                <input type="text" id="codigo" v-model="form.CodArticulo" class="form-control minimal-input" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="nombre" class="form-label">Nombre del Artículo</label>
+                                <input type="text" id="nombre" v-model="form.NomArticulo" class="form-control minimal-input" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="proveedor" class="form-label">Proveedor</label>
+                                <select id="proveedor" v-model="form.IdProveedor" class="form-select minimal-input" required>
+                                    <option value="" disabled>Selecciona un proveedor</option>
+                                    <option v-for="prov in proveedores" :key="prov.IdProveedor" :value="prov.IdProveedor">
+                                        {{ prov.NomProveedor }} ({{ prov.RFC }})
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="unidad" class="form-label">Unidad de Medida (Nombre)</label>
+                                <input type="text" id="unidad" v-model="form.NombreUnidad" class="form-control minimal-input" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="minimo" class="form-label">Stock Mínimo (Alerta)</label>
+                                <input type="number" id="minimo" v-model.number="form.CantidadMinima" class="form-control minimal-input" required min="0">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="maximo" class="form-label">Stock Máximo (Límite)</label>
+                                <input type="number" id="maximo" v-model.number="form.CantidadMaxima" class="form-control minimal-input" required min="0">
+                            </div>
+                            <div class="col-12 d-flex justify-content-between mt-4">
+                                <button type="button" @click="$router.push({ name: 'Articulos' })" class="btn btn-secondary minimal-btn">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-dark minimal-btn" :disabled="isSaving">
+                                    <span v-if="isSaving">Guardando...</span>
+                                    <span v-else>{{ isEditing ? 'Guardar Cambios' : 'Crear Artículo' }}</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="maximo" class="form-label">Stock Máximo (Límite)</label>
-                        <input type="number" id="maximo" v-model.number="form.CantidadMaxima" class="form-control" required min="0">
-                    </div>
                 </div>
-
-                <div class="mb-3">
-                    <label for="unidad" class="form-label">Unidad de Medida (Nombre)</label>
-                    <input type="text" id="unidad" v-model="form.NombreUnidad" class="form-control" required>
-                </div>
-
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" @click="$router.push({ name: 'Articulos' })" class="btn btn-secondary">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                        <span v-if="isSaving">Guardando...</span>
-                        <span v-else>{{ isEditing ? 'Guardar Cambios' : 'Crear Artículo' }}</span>
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </template>
@@ -64,6 +63,7 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import articuloService from '@/services/articuloService';
+import { getProveedores } from '@/services/proveedorService';
 
 const route = useRoute();
 const router = useRouter();
@@ -77,11 +77,13 @@ const form = reactive({
     NomArticulo: '', 
     CodArticulo: '', 
     StockActual: 0, 
-    IdProveedor: 1,      
+    IdProveedor: '',      
     CantidadMinima: 0,
     CantidadMaxima: 0,
     NombreUnidad: '', 
 });
+
+const proveedores = ref([]);
 
 const loading = ref(false);
 const isSaving = ref(false);
@@ -165,8 +167,13 @@ const handleSubmit = async () => {
     }
 };
 
-// Cargar datos al montar si estamos en modo edición
-onMounted(() => {
+// Cargar proveedores y datos al montar
+onMounted(async () => {
+    try {
+        proveedores.value = await getProveedores();
+    } catch (err) {
+        errorMsg.value = 'Error al cargar proveedores.';
+    }
     if (isEditing.value) {
         loadItem();
     }

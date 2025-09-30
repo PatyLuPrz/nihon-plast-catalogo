@@ -13,6 +13,37 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.app-main-container {
+    margin: 0 auto;
+    min-height: 80vh;
+    background: #f8f9fa;
+  }
+  .minimal-bg {
+    background: #f8f9fa;
+    min-height: 80vh;
+  }
+  .minimal-card {
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+  .minimal-input {
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+    background: #f9f9f9;
+    font-size: 1.1rem;
+  }
+  .minimal-btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  @media (max-width: 991px) {
+    .minimal-card {
+      margin-bottom: 2rem;
+    }
+  }
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -20,14 +51,6 @@ a {
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -58,12 +81,6 @@ button:focus-visible {
   padding: 2em;
 }
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
 
 @media (prefers-color-scheme: light) {
   :root {
