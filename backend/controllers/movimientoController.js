@@ -1,7 +1,33 @@
-// backend/controllers/movimientoController.js
+// ===============================================
+// Historial de Movimientos (Entradas y Salidas)
+// ===============================================
+exports.getHistorialMovimientos = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        // Consulta combinada de entradas y salidas, unificando campos
+        const result = await client.query(`
+            SELECT E."IdEntrada" AS "IdMovimiento", E."IdArticulo", A."NomArticulo", 'ENTRADA' AS "TipoMovimiento", E."Cantidad", A."StockActual" AS "StockFinal", E."FechaMovimiento"
+            FROM "Entradas" E
+            JOIN "Articulos" A ON E."IdArticulo" = A."IdArticulo"
+            WHERE E."BajaLogica" = TRUE
+            UNION ALL
+            SELECT S."IdSalida" AS "IdMovimiento", S."IdArticulo", A."NomArticulo", 'SALIDA' AS "TipoMovimiento", S."Cantidad", A."StockActual" AS "StockFinal", S."FechaMovimiento"
+            FROM "Salidas" S
+            JOIN "Articulos" A ON S."IdArticulo" = A."IdArticulo"
+            WHERE S."BajaLogica" = TRUE
+            ORDER BY "FechaMovimiento" DESC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener historial de movimientos:', error);
+        res.status(500).json({ msg: 'Error interno al obtener historial de movimientos.' });
+    } finally {
+        client.release();
+    }
+};
 const { query, pool } = require('../config/db'); 
 // Uso de Socket.IO
-const { io } = require('../app'); 
+const { getIO } = require('../socket');
 
 // Función auxiliar para auditoría (obtener el IdUsuario que realiza el movimiento)
 const getUserInfo = (req) => {
@@ -78,11 +104,11 @@ exports.entradaInsumo = async (req, res) => {
        await client.query('COMMIT'); // CONFIRMAR TRANSACCIÓN
 
         // 5. Notificación en Tiempo Real
-        io.emit('stockUpdate', { 
+        getIO().emit('stockUpdate', { 
             id: IdArticulo, 
             newStock: nuevoStock,
             message: `El stock del artículo ${IdArticulo} ha sido actualizado a ${nuevoStock}.`
-        }); 
+        });
 
         res.json({ msg: 'Entrada registrada exitosamente.', nuevoStock });
 
@@ -165,8 +191,8 @@ exports.salidaInsumo = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Notificación en Tiempo Real (descomentar al integrar Socket.IO)
-        // io.emit('stockUpdate', { message: `Stock de artículo ${IdArticulo} actualizado.` });
+    // Notificación en Tiempo Real
+    getIO().emit('stockUpdate', { message: `Stock de artículo ${IdArticulo} actualizado.` });
         
         // Devolver el mensaje de alerta si existe (Funcionalidad 4)
         const response = { 
